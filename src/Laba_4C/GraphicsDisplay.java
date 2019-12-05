@@ -2,9 +2,24 @@ package Laba_4C;
 
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.geom.*;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+
 
 import static java.lang.Math.abs;
 
@@ -280,11 +295,13 @@ public class GraphicsDisplay extends JPanel {
         Font oldFont = canvas.getFont();
 
 
+
         if (!showTurn) {
             AffineTransform at = AffineTransform.getRotateInstance(-Math.PI/2, getSize().getWidth()/2, getSize().getHeight()/2);
             at.concatenate(new AffineTransform(getSize().getHeight()/getSize().getWidth(), 0.0, 0.0, getSize().getWidth()/getSize().getHeight(),
                     (getSize().getWidth()-getSize().getHeight())/2, (getSize().getHeight()-getSize().getWidth())/2));
             canvas.setTransform(at);
+
 
         }
         // Шаг 8 - В нужном порядке вызвать методы отображения элементов графика
@@ -303,6 +320,21 @@ public class GraphicsDisplay extends JPanel {
         canvas.setStroke(oldStroke);
     }
 
+    public void saveToTextFile(File selectedFile)	{
+        try{
+            PrintStream out = new PrintStream(selectedFile);
+            out.println("Результаты скорректированых значений");
+            for (Double[] point : graphicsData){
+                out.println(point[0] + " " + point[1]);
+            }
+
+            out.close();
+
+        }catch (FileNotFoundException e){
+
+        }
+
+    }
 
     public void setShowAxis(boolean showAxis) {
         this.showAxis = showAxis;

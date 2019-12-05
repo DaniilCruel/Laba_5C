@@ -30,6 +30,7 @@ public class MainFrame extends JFrame {
     private JCheckBoxMenuItem showMarkersMenuItem;
     private JCheckBoxMenuItem shapeturnAction;
     private JMenuItem informationItem;
+    private JMenuItem saveToTextMenuItem;
 
     public MainFrame(){
         super("Построение графиков функций на основе подготовленных файлов");
@@ -65,7 +66,20 @@ public class MainFrame extends JFrame {
         // Добавить соответствующий элемент меню
         fileMenu.add(openGraphicsAction);
         // Создать пункт меню "График"
+        Action saveToTextAction = new AbstractAction("Сохранить в .txt" ) {
 
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (fileChooser == null){
+                    fileChooser = new JFileChooser();
+                    fileChooser.setCurrentDirectory(new File("."));
+                }
+                if (fileChooser.showSaveDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION){
+                    display.saveToTextFile(fileChooser.getSelectedFile());
+                }
+            }
+        };
+        saveToTextMenuItem = fileMenu.add(saveToTextAction);
         // Создать действие для реакции на активацию элемента
         // "Показывать оси координат"
         Action showAxisAction = new AbstractAction("Показывать оси координат") {
