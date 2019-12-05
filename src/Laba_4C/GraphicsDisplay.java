@@ -7,6 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.Ellipse2D;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
@@ -69,12 +70,20 @@ public class GraphicsDisplay extends JPanel {
         this.graphicsData = graphicsData;
 
 
-        this.originalData = graphicsData;
+        this.originalData = new Double[graphicsData.length][];
+        int i = 0;
+        for (Double[] point : graphicsData){
+
+            Double x = Double.valueOf(point[0]);
+            Double y = Double.valueOf(point[1]);
+            originalData[i++] = new Double[] {x, y};
+        }
+
         this.minX = graphicsData[0][0];
         this.maxX = graphicsData[graphicsData.length - 1][0];
         this.minY = graphicsData[0][1];
         this.maxY = this.minY;
-        for (int i = 1; i < graphicsData.length; i++) {
+        for ( i = 1; i < graphicsData.length; i++) {
             if (graphicsData[i][1] < this.minY) {
                 this.minY = graphicsData[i][1];
             }
@@ -290,6 +299,16 @@ public class GraphicsDisplay extends JPanel {
                 canvas.draw(new Line2D.Double(shiftPoint(center, -8, 8), shiftPoint(center, 8, -8)));
                 Point2D.Double corner = shiftPoint(center, 3, 3);
             }
+            else {
+                Ellipse2D.Double marker = new Ellipse2D.Double();
+                Point2D.Double center = xyToPoint(point[0], point[1]);
+                Point2D.Double corner = shiftPoint(center, 3, 3);
+                marker.setFrameFromCenter(center, corner);
+                canvas.draw(marker); // Начертить контур маркера
+                canvas.fill(marker); // Залить внутреннюю область маркера
+
+
+            }
 
         }
     }
@@ -391,6 +410,10 @@ public class GraphicsDisplay extends JPanel {
         repaint();
     }
 
+    public void reset() {
+        showGraphics(this.originalData);
+    }
+
 
     public class MouseHandler extends MouseAdapter {
         public MouseHandler() {
@@ -447,15 +470,15 @@ public class GraphicsDisplay extends JPanel {
             if (changeMode) {
 
                 double[] currentPoint = translatePointToXY(ev.getX(), ev.getY());
-                double newY = ((Double[]) graphicsData[selectedMarker])[1].doubleValue() +
-                        (currentPoint[1] - ((Double[]) graphicsData[selectedMarker])[1].doubleValue());
+                double newY =  graphicsData[selectedMarker][1] +
+                        currentPoint[1] - graphicsData[selectedMarker][1];
                 if (newY > viewport[0][1]) {
                     newY = viewport[0][1];
                 }
                 if (newY < viewport[1][1]) {
                     newY = viewport[1][1];
                 }
-                ((Double[]) graphicsData[selectedMarker])[1] = Double.valueOf(newY);
+                 graphicsData[selectedMarker][1] = Double.valueOf(newY);
                 repaint();
             } else {
                 double width = ev.getX() - selectionRect.getX();
