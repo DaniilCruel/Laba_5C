@@ -14,9 +14,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -48,7 +46,9 @@ public class GraphicsDisplay extends JPanel {
     private double maxY;
     private double minX;
     private double minY;
+    private double scaleX;
     private double scale;
+    private double scaleY;
     // Флаговые переменные, задающие правила отображения графика
     private boolean showAxis = true;
     private boolean showMarkers = true;
@@ -100,7 +100,7 @@ public class GraphicsDisplay extends JPanel {
 
 
     protected double[] translatePointToXY(int x, int y) {
-        return new double[]{this.viewport[0][0] + x / this.scale, this.viewport[0][1] - y / this.scale};
+        return new double[]{this.viewport[0][0] + x / this.scaleX, this.viewport[0][1] - y / this.scaleY};
     }
 
     public void zoomToRegion(double x1, double y1, double x2, double y2) {
@@ -113,10 +113,9 @@ public class GraphicsDisplay extends JPanel {
 
     protected Point2D.Double xyToPoint(double x, double y) {
         // Вычисляем смещение X от самой левой точки (minX)
-        double deltaX = x - minX;
-        // Вычисляем смещение Y от точки верхней точки (maxY)
-        double deltaY = maxY - y;
-        return new Point2D.Double(deltaX * scale, deltaY * scale);
+        double deltaX = x - viewport[0][0];
+        double deltaY = viewport[0][1] - y;
+        return new Point2D.Double(deltaX * scaleX, deltaY * scaleY);
     }
 
     protected Point2D.Double shiftPoint(Point2D.Double src, double deltaX, double deltaY) {
@@ -234,7 +233,7 @@ public class GraphicsDisplay extends JPanel {
         if (graphicsData == null) return -1;
         int pos = 0;
         for (Double[] point : graphicsData) {
-            Point2D.Double screenPoint = xyToPoint(point[0].doubleValue(), point[1].doubleValue());
+            Point2D.Double screenPoint = xyToPoint(point[0], point[1]);
             double distance = (screenPoint.getX() - x) * (screenPoint.getX() - x) + (screenPoint.getY() - y) * (screenPoint.getY() - y);
             if (distance < 100) return pos;
             pos++;
@@ -335,36 +334,13 @@ public class GraphicsDisplay extends JPanel {
 
         super.paintComponent(g);
 
+        scaleX=this.getSize().getWidth() / (this.viewport[1][0] - this.viewport[0][0]);
+        scaleY=this.getSize().getHeight() / (this.viewport[0][1] - this.viewport[1][1]);
         if (graphicsData == null || graphicsData.length == 0) return;
-
-        minX = graphicsData[0][0];
-        maxX = graphicsData[graphicsData.length - 1][0];
-        minY = graphicsData[0][1];
-        maxY = minY;
-        for (int i = 1; i < graphicsData.length; i++) {
-            if (graphicsData[i][1] < minY) {
-                minY = graphicsData[i][1];
-            }
-            if (graphicsData[i][1] > maxY) {
-                maxY = graphicsData[i][1];
-            }
-        }
-        double scaleX = getSize().getWidth() / (maxX - minX);
-        double scaleY = getSize().getHeight() / (maxY - minY);
 
         scale = Math.min(scaleX, scaleY);
 
-        if (scale == scaleX) {
-            double yIncrement = (getSize().getHeight() / scale - (maxY - minY)) / 2;
-            maxY += yIncrement;
-            minY -= yIncrement;
-        }
-        if (scale == scaleY) {
-            // Если за основу был взят масштаб по оси Y, действовать по аналогии
-            double xIncrement = (getSize().getWidth() / scale - (maxX - minX)) / 2;
-            maxX += xIncrement;
-            minX -= xIncrement;
-        }
+
         Graphics2D canvas = (Graphics2D) g;
         Stroke oldStroke = canvas.getStroke();
         Color oldColor = canvas.getColor();
@@ -407,20 +383,20 @@ public class GraphicsDisplay extends JPanel {
         canvas.setColor(Color.BLACK);
         canvas.draw(selectionRect);
     }
-    public void saveToTextFile(File selectedFile) {
+
+
+    protected void saveToTextFile(File selectedFile) {
         try {
-            PrintStream out = new PrintStream(selectedFile);
-            out.println("Результаты скорректированых значений");
-            for (Double[] point : graphicsData) {
-                out.println(point[0] + " " + point[1]);
+            DataOutputStream out = new DataOutputStream(new FileOutputStream(selectedFile));
+
+            for (int i = 0; i < graphicsData.length; i++) {
+                out.writeDouble((Double) graphicsData[i][0]);
+                out.writeDouble((Double) graphicsData[i][1]);
             }
-
             out.close();
-
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
 
         }
-
     }
 
     public void setShowAxis(boolean showAxis) {
