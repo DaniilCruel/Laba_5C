@@ -95,7 +95,6 @@ public class GraphicsDisplay extends JPanel {
             }
         }
         zoomToRegion(minX, maxY, maxX, minY);
-
     }
 
 
@@ -338,7 +337,6 @@ public class GraphicsDisplay extends JPanel {
         scaleY=this.getSize().getHeight() / (this.viewport[0][1] - this.viewport[1][1]);
         if (graphicsData == null || graphicsData.length == 0) return;
 
-        scale = Math.min(scaleX, scaleY);
 
 
         Graphics2D canvas = (Graphics2D) g;
@@ -346,7 +344,6 @@ public class GraphicsDisplay extends JPanel {
         Color oldColor = canvas.getColor();
         Paint oldPaint = canvas.getPaint();
         Font oldFont = canvas.getFont();
-
 
         if (!showTurn) {
             AffineTransform at = AffineTransform.getRotateInstance(-Math.PI / 2, getSize().getWidth() / 2, getSize().getHeight() / 2);
