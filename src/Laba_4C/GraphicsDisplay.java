@@ -73,8 +73,6 @@ public class GraphicsDisplay extends JPanel {
 
     public void showGraphics(Double[][] graphicsData) {
         this.graphicsData = graphicsData;
-
-
         this.originalData = new Double[graphicsData.length][];
         int i = 0;
         for (Double[] point : graphicsData){
