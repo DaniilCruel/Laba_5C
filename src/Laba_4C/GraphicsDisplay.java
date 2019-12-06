@@ -17,6 +17,8 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 
 
@@ -26,16 +28,17 @@ public class GraphicsDisplay extends JPanel {
 
 
     private double[][] viewport = new double[2][2];
-    private Font axisFont;             // шрифт подписей к осям коорд
+    private Font axisFont;
     private ArrayList<double[][]> undoHistory = new ArrayList(5);
-
+    private Font labelsFont;
     private int selectedMarker = -1;
     private Double[][] graphicsData;
     private Double[][] originalData;// список коорд точек для построения графика
     private BasicStroke axisStroke;
     private BasicStroke graphicsStroke;
     private BasicStroke markerStroke;
-
+    private BasicStroke selectionStroke;
+    private static DecimalFormat formatter=(DecimalFormat) NumberFormat.getInstance();
     private boolean scaleMode = false;
     private boolean changeMode = false;
     private double[] originalPoint = new double[2];
@@ -58,11 +61,13 @@ public class GraphicsDisplay extends JPanel {
                 BasicStroke.JOIN_ROUND, 10.0f, new float[]{30, 5, 5, 5, 5, 5, 15, 5, 15, 5}, 0.0f);
         axisStroke = new BasicStroke(3.0f, BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
+        selectionStroke = new BasicStroke(1.0F, 0, 0, 10.0F, new float[] { 10, 10 }, 0.0F);
         markerStroke = new BasicStroke(2.0f, BasicStroke.CAP_SQUARE,
                 BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
         axisFont = new Font("Serif", Font.BOLD, 36);
         addMouseMotionListener(new MouseMotionHandler());
         addMouseListener(new MouseHandler());
+        labelsFont = new java.awt.Font("Serif",0,10);
     }
 
 
@@ -312,7 +317,22 @@ public class GraphicsDisplay extends JPanel {
 
         }
     }
+    private void paintLabels(Graphics2D canvas){
+        canvas.setColor(Color.BLACK);
+        canvas.setFont(this.labelsFont);
+        FontRenderContext context=canvas.getFontRenderContext();
 
+        if (selectedMarker >= 0)
+        {
+            Point2D.Double point = xyToPoint(graphicsData[selectedMarker][0],
+                    graphicsData[selectedMarker][1]);
+            String label = "x= " + formatter.format(graphicsData[selectedMarker][0]) +
+                    ", y= " + formatter.format(graphicsData[selectedMarker][1]);
+            Rectangle2D bounds = labelsFont.getStringBounds(label, context);
+            canvas.setColor(Color.BLACK);
+            canvas.drawString(label, (float)(point.getX() + 5.0D), (float)(point.getY() - bounds.getHeight()));
+        }
+    }
     public void paintComponent(Graphics g) {
 
         super.paintComponent(g);
@@ -366,18 +386,29 @@ public class GraphicsDisplay extends JPanel {
         // Порядок вызова методов имеет значение, т.к. предыдущий рисунок будет
         // затираться последующим
         // Первым (если нужно) отрисовываются оси координат.
-        if (showAxis) paintAxis(canvas);
-        // Затем отображается сам график
+
+        if (showAxis)
+        {paintAxis(canvas);
+            paintLabels(canvas);
+        }
         paintGraphics(canvas);
         // Затем (если нужно) отображаются маркеры точек графика.
         if (showMarkers) paintMarkers(canvas);
         // Шаг 9 - Восстановить старые настройки холста
+        paintSelection(canvas);
         canvas.setFont(oldFont);
         canvas.setPaint(oldPaint);
         canvas.setColor(oldColor);
         canvas.setStroke(oldStroke);
+
     }
 
+    private void paintSelection(Graphics2D canvas) {
+        if (!scaleMode) return;
+        canvas.setStroke(selectionStroke);
+        canvas.setColor(Color.BLACK);
+        canvas.draw(selectionRect);
+    }
     public void saveToTextFile(File selectedFile) {
         try {
             PrintStream out = new PrintStream(selectedFile);
@@ -493,7 +524,6 @@ public class GraphicsDisplay extends JPanel {
                 repaint();
             }
         }
-
 
         public void mouseMoved(MouseEvent ev) {
             selectedMarker = findSelectedPoint(ev.getX(), ev.getY());
